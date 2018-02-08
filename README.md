@@ -17,6 +17,7 @@ This script is intended to run routinely with for example Windows Task Scheduler
 
 **Running as Task in Windows Task Scheduler**
 Here is an exable of action:
+    
     Program/script: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
     Add arguments (optional): -noprofile -executionpolicy bypass -file "C:\demo\RemotePrintersWithErrorsToCSV.ps1"
     Start in (optional): C:\demo\
