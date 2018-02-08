@@ -16,6 +16,7 @@ This script is intended to run routinely with for example Windows Task Scheduler
   the script execution machine.
 
 **Running as Task in Windows Task Scheduler**
+
 Here is an exable of action:
     
     Program/script: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
