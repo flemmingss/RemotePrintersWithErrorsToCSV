@@ -29,3 +29,13 @@ Example of running the script
 ![alt tag](images/run_demo.png)
 Example of viewing results using the Import-Csv and Sort-Object cmdlets.
 ![alt tag](images/csv_results_demo.png)
+
+**Changelog**  
+
+* 26.02.2018
+    * Fixed bug that caused script to export $null if one or more servers was unavailable to remote.  
+    *Implemented try-catch to not export if a error is detected*
+    * Fixed bug that caused PrinterStatus Propertie to be a numerical value.  
+    *Added "Import-Module PrintManagement"*  
+* 08.02.2018
+    * Release
