@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Name: RemotePrintersWithErrorsToCSV.ps1
   The purpose of this script is to obtain a list of printers with
@@ -20,7 +20,7 @@
   the script execution machine.
 
 .NOTES
-    Release Date: 08.02.2018
+    Original release Date: 08.02.2018 Updated: 26.02.2018
 
   Author: Flemming Sørvollen Skaret (https://github.com/flemmingss/)
 
@@ -67,29 +67,42 @@ $NewResults | ForEach-Object -Begin {$Date = Get-Date} `
                              -process { $_ | Add-Member -Name ErrorOccurredDate -MemberType NoteProperty -Value $Date}
 $NewResults = ($NewResults | Select-Object $ObjectProperties | ConvertTo-Csv|  ConvertFrom-CSV)
 
-if (Test-Path -Path $CsvPath)
+Import-Module PrintManagement
+
+try
 	{
-	Write-Output "CSV file found, importing data"
+	$NewResults = Invoke-Command -ComputerName $Servers -ScriptBlock $RemoteScript -ErrorAction Stop
+	$NewResults | ForEach-Object -Begin {$Date = Get-Date} `
+                 	  	     	-process { $_ | Add-Member -Name ErrorOccurredDate -MemberType NoteProperty -Value $Date}
+	$NewResults = ($NewResults | Select-Object $ObjectProperties | ConvertTo-Csv|  ConvertFrom-CSV)
 
-	$OldResults = Import-Csv -Path "$CsvPath"
-	$NewErrorsName = (Compare-Object -ReferenceObject $NewResults -DifferenceObject $OldResults -Property Name | Where-Object {$_.SideIndicator -eq "<="}).Name
-	$EqualErrorsName = (Compare-Object -ReferenceObject $NewResults -DifferenceObject $OldResults -Property Name -IncludeEqual | Where-Object {$_.SideIndicator -eq "=="}).Name
-	$NewErrorsToExport = $NewResults | Where-Object { $NewErrorsName -contains $_.Name }
-	$EqualErrorsToExport = $OldResults | Where-Object { $EqualErrorsName -contains $_.Name }
-	$UpdatedErrors = $EqualErrorsToExport + $NewErrorsToExport
-	}
-
-else
-	{
-	Write-Output "CSV file not found. This script will automatically create the file"
-	$UpdatedErrors = $NewResults
-	}
-
+	if (Test-Path -Path $CsvPath)
+		{
+		Write-Output "CSV file found, importing data"
+		$OldResults = Import-Csv -Path "$CsvPath"
+		$NewErrorsName = (Compare-Object -ReferenceObject $NewResults -DifferenceObject $OldResults -Property Name | Where-Object {$_.SideIndicator -eq "<="}).Name
+		$EqualErrorsName = (Compare-Object -ReferenceObject $NewResults -DifferenceObject $OldResults -Property Name -IncludeEqual | Where-Object {$_.SideIndicator -eq "=="}).Name
+		$NewErrorsToExport = $NewResults | Where-Object { $NewErrorsName -contains $_.Name }
+		$EqualErrorsToExport = $OldResults | Where-Object { $EqualErrorsName -contains $_.Name }
+		$UpdatedErrors = $EqualErrorsToExport + $NewErrorsToExport
+		}
+	else
+		{
+		Write-Output "CSV file not found. This script will automatically create the file"
+		$UpdatedErrors = $NewResults
+		}	
+		
 	Write-Output "Exporting data to CSV file"
-	$UpdatedErrors | Select-Object $ObjectProperties | Export-Csv "$CsvPath" -NoTypeInformation
-
-Clear-Variable CsvPath,Servers,ObjectProperties,RemoteScript,NewResults,Date,OldResults,NewErrorsName,EqualErrorsName,NewErrorsToExport,EqualErrorsToExport,UpdatedErrors -ErrorAction SilentlyContinue
-
-Write-Output "Script execution complete"
+	$UpdatedErrors | Select-Object $ObjectProperties | Export-Csv "$CsvPath" -NoTypeInformation		
+	}
+catch
+	{
+    Write-Output "Error in execution detected. Aborting export to prevent errors in CSV file"
+	}
+finally
+	{
+	Clear-Variable CsvPath,Servers,ObjectProperties,RemoteScript,NewResults,Date,OldResults,NewErrorsName,EqualErrorsName,NewErrorsToExport,EqualErrorsToExport,UpdatedErrors -ErrorAction SilentlyContinue
+	Write-Output "Script execution complete"
+	}
 
 # End for Script
